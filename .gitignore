@@ -1,0 +1,8 @@
+# Local enviroment configurations
+/Include
+/Lib
+/Scripts
+pyvenv.cfg
+
+# Secrets
+.env

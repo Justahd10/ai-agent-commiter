@@ -1,4 +1,5 @@
 import os, subprocess
+from typing import TypedDict
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -7,32 +8,69 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Target project root path
-root_path = Path(f'{os.environ.get("TARGET_ROOT_PATH")}').absolute()
+root_path = os.environ.get("TARGET_ROOT_PATH")
 
-def run_git_cmd(cmd: str | list) -> subprocess.CompletedProcess:
+git_cmds = [
+  ('Arquivos modificados', ["git", "status"]),
+  ('Linhas adicionadas e removidas', ["git", "diff"]),
+  ('Resumo de alterações pendentes', ["git", "diff", "--stat"]),
+  (f'Últimos 10 commits', ["git", "log", "-n", "10", "-p"]),
+  ("Resumo de histórico", ["git", "log", "-n", "10", "--stat"])
+]
+
+class Commit(TypedDict):
+  total_files: int
+  files: list[str]
+  message: str
+
+def run_git_cmd(cmd: list[str]) -> subprocess.CompletedProcess:
   """
   Run git command into shell and return the output
   Args:
     cmd (str | list): git command to run
   """
-
-  # handle command format
-  if type(cmd) == str: cmd = cmd.split(" ")
-
   # Try run command
-  try:
-    cmdResult = subprocess.run(
-      cmd, 
-      cwd=root_path,
-      check=True, 
-      capture_output=True, 
-      text=True
-    )
-
-  except subprocess.CalledProcessError as err:
-    print("Erro de exeução:", cmd)
-    print("Código de erro:", err.returncode)
-    print("Mensagem:", err.stderr)
+  cmdResult = subprocess.run(
+    cmd, cwd=root_path, check=True, 
+    capture_output=True, text=True
+  )
 
   # Check if successful
   return cmdResult
+
+def get_projects_changes() -> list[subprocess.CompletedProcess]: 
+  """
+  Get the content of all git commands
+  Returns:
+    str: text with git content
+  """
+  # Start git content
+  git_content = ""
+
+  # Append data into content
+  for item in git_cmds:
+    result = run_git_cmd(item[1])
+
+    git_content = git_content + f"{item[0]}:\n {result.stdout}\n\n"
+
+  return git_content
+
+def save_project_changes(commits: list[Commit]):
+  """
+  Save project changes into git repository
+  Args:
+    commits (list[Commit]): list of commits to save
+  """
+  for commit in commits:
+    print(f"Processando: {commit['total_files']} arquivos...")
+
+    # Add files
+    for f in commit['files']:
+      p = Path(f"{root_path}/{f}").absolute()
+               
+      print(f"Adicionando arquivo {p}...")
+      run_git_cmd(f"git add {p}")
+
+    # Commit changes
+    print("Realizando commit...")
+    run_git_cmd(f'git commit -m "{commit['message']}"')

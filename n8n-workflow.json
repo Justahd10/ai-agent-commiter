@@ -1,0 +1,176 @@
+{
+  "name": "Git Committer Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c0cb0d35-c808-469f-91fd-e5ebe143e123",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -32
+      ],
+      "id": "84096313-9ef7-4278-b94a-095d6c996fb2",
+      "name": "Webhook",
+      "webhookId": "c0cb0d35-c808-469f-91fd-e5ebe143e123"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"successful\",\n  \"error\": null,\n  \"payload\": {\n    \"output\": {{ JSON.stringify($json.output) }}\n  }\n} ",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "52698193-8f5b-4db7-a266-391c1e8a347b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.git_content }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "={{ $json.body.system_message }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "4633e12d-e0fc-48af-abc4-ed27412822b3",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        128,
+        272
+      ],
+      "id": "8103f356-420d-4810-b8ac-94471514d769",
+      "name": "DeepSeek",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "9P00iKwBczkLUzjJ",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.project }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        304,
+        256
+      ],
+      "id": "719d808f-cf32-41d9-acf7-e2e655759c39",
+      "name": "memory"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"totalCommits\": {\n      \"type\": \"number\",\n      \"description\": \"Quantidade de commits que devem ser feitos\"\n    },\n    \"commits\": {\n      \"type\": \"array\",\n      \"description\": \"Commits que devem ser feitos\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"total_files\": {\n            \"type\": \"number\",\n            \"description\": \"Quantidade de arquivos envolvidos no commit\"\n          },\n          \"files\": {\n            \"type\": \"array\",\n            \"description\": \"Arquivos envolvidos no commit\",\n            \"items\": {\n              \"type\": \"string\",\n              \"description\": \"Caminho absoluto de um arquivo\"\n            }\n          },\n          \"message\": {\n            \"type\": \"string\",\n            \"description\": \"Mensagem de commit\"\n          }\n        },\n        \"required\": [\"total_files\", \"files\", \"message\"]\n      }\n    }\n  },\n  \"required\": [\"totalCommits\", \"commits\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        256
+      ],
+      "id": "ecb8b65b-3c47-40ca-b372-746dfb23b9ce",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "15bbf355-18b6-45fb-bf88-4e1bc60e6434",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7aee65e739a6acab352224fb4265fd1fde54384cad3f8191a21335a58acc3488"
+  },
+  "nodeGroups": [],
+  "id": "aXgV2yOZHGPISpUq",
+  "tags": []
+}

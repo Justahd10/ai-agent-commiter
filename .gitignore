@@ -4,5 +4,8 @@
 /Scripts
 pyvenv.cfg
 
+# Runtime process
+__pycache__/
+
 # Secrets
 .env

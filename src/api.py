@@ -16,4 +16,6 @@ def request_ai_commiter(system_msg: str, git_content: str) -> None | dict:
     headers={ 'Content-Type': "application/json" }
   )
 
+  response.raise_for_status()
+
   return response.json()

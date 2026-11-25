@@ -7,9 +7,6 @@ from dotenv import load_dotenv
 # Load enviroment variables
 load_dotenv()
 
-# Target project root path
-root_path = os.environ.get("TARGET_ROOT_PATH")
-
 git_cmds = [
   ('Arquivos modificados', ["git", "status"]),
   ('Linhas adicionadas e removidas', ["git", "diff"]),
@@ -31,7 +28,7 @@ def run_git_cmd(cmd: list[str]) -> subprocess.CompletedProcess:
   """
   # Try run command
   cmdResult = subprocess.run(
-    cmd, cwd=root_path, check=True, 
+    cmd, cwd=os.environ.get("TARGET_ROOT_PATH"), check=True, 
     capture_output=True, text=True
   )
 
@@ -66,10 +63,8 @@ def save_project_changes(commits: list[Commit]):
 
     # Add files
     for f in commit['files']:
-      p = Path(f"{root_path}/{f}").absolute()
-               
-      print(f"Adicionando arquivo {p}...")
-      run_git_cmd(f"git add {p}")
+      print(f"Adicionando arquivo {f}...")
+      run_git_cmd(f"git add {Path(f).absolute()}")
 
     # Commit changes
     print("Realizando commit...")
